@@ -59,6 +59,12 @@ def test_every_validator_reports_a_malformed_file(world, text):
     assert rows[0]["path"] == "broken.md"
     assert rows[0]["error"]
 
+    rich = world.cli("kb", "validate", "notes", "--format", "rich")
+    assert rich.exit_code == 2, rich.output
+    assert "Malformed: broken.md" in rich.stdout
+    assert rows[0]["error"] in rich.stdout
+    assert str(world.kb_path("notes")) not in rich.stdout
+
 
 def test_sync_prints_a_kb_relative_path_on_one_line(world):
     relative = "nested/" + "long-name-" * 15 + ".md"
