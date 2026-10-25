@@ -16,11 +16,12 @@ from ...exceptions import (
     StorageError,
     ValidationError,
 )
-from ...services.access_policy import KB, Action, AnyKB, ReadScope
+from ...services.access_policy import KB, AccessPolicy, Action, AnyKB, ReadScope
 from ...services.block_service import BlockService
 from ...services.kb_service import KBService
 from ...services.read_shaping import IDENTITY_FIELDS, parse_fields_param, project_fields
 from ..api import (
+    get_access_policy,
     get_block_service,
     get_config,
     get_kb_service,
@@ -30,7 +31,7 @@ from ..api import (
     negotiate_response,
     requires_kb_tier,
 )
-from ..authz import authorize
+from ..authz import authorize, read_scope
 from ..schemas import (
     CreateEntryRequest,
     CreateResponse,
@@ -1005,11 +1006,12 @@ def delete_entry(
     entry_id: str,
     kb: str = Query(..., description="KB name"),
     svc: KBService = Depends(get_kb_service),
-    scope: ReadScope = Depends(authorize(Action.KB_READ, KB)),
+    policy: AccessPolicy = Depends(get_access_policy),
 ):
     """Delete an entry."""
+    readable = read_scope(request, policy).as_set()
     try:
-        deleted = svc.delete_entry(entry_id, kb, readable_kbs=scope.as_set())
+        deleted = svc.delete_entry(entry_id, kb, readable_kbs=readable)
     except EntryNotFoundError as e:
         # A KBNotFoundError is never caught here: the write tier resolves the
         # named KB before the handler runs (#952), and one that still arrives

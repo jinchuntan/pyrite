@@ -153,6 +153,7 @@ ALLOWLIST: dict[tuple[str, str], str] = {
     ("POST", "/api/entries"): "write route: requires_kb_tier('write') subsumes read",
     ("PUT", "/api/entries/{entry_id}"): "write route: requires_kb_tier('write') subsumes read",
     ("PATCH", "/api/entries/{entry_id}"): "write route: requires_kb_tier('write') subsumes read",
+    ("DELETE", "/api/entries/{entry_id}"): "write route: requires_kb_tier('write') subsumes read",
     ("POST", "/api/entries/import"): "write route: requires_kb_tier('write') subsumes read",
     ("POST", "/api/clip"): "write route: requires_kb_tier('write') subsumes read",
     ("POST", "/api/collections"): "write route: requires_kb_tier('write') subsumes read",

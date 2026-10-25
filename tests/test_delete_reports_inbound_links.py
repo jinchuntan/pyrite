@@ -11,7 +11,7 @@ from tests._world import build_world
 from tests.auth_seed import SESSION_COOKIE, seed_user, sign_in
 
 
-def make_world(tmp_path, *, scoped=False, linked=True):
+def make_world(tmp_path, *, scoped=False, linked=True, target_role="write"):
     world = build_world(
         tmp_path,
         kbs=[
@@ -36,7 +36,7 @@ def make_world(tmp_path, *, scoped=False, linked=True):
         admin = seed_user(world.db, "admin", role="admin")
         auth = AuthService(world.db, world.config.settings.auth)
         user = auth.register("writer", "password123")
-        for kb, role in (("target", "write"), ("readable", "read")):
+        for kb, role in (("target", target_role), ("readable", "read")):
             auth.grant_kb_permission(user["id"], kb, role, granted_by=admin["id"])
         world.client.cookies.set(SESSION_COOKIE, sign_in(world.app, "writer"))
     return world
@@ -106,6 +106,17 @@ def test_a_self_link_does_not_count_as_a_dangling_link(tmp_path, surface):
         assert result["inbound_links"] == []
         assert result["inbound_link_count"] == 0
         assert result["warnings"] == []
+    finally:
+        world.close()
+
+
+@pytest.mark.control(reason="read access still does not authorize deletion")
+def test_delete_still_requires_write_access(tmp_path):
+    world = make_world(tmp_path, scoped=True, target_role="read")
+    try:
+        result = world.client.delete("/api/entries/victim?kb=target")
+        assert result.status_code == 403, result.text
+        assert (world.kb_path("target") / "victim.md").exists()
     finally:
         world.close()
 
