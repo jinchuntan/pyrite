@@ -269,10 +269,9 @@ def kb_validate(
 ):
     """Validate knowledge base configuration and contents.
 
-    Runs structural kb.yaml validation PLUS the three Phase 0 content-drift
-    checks (undeclared entry types, missing required fields, subdirectory
-    mismatches). Results are filtered per-KB when a specific KB name is
-    given.
+    Checks kb.yaml structure and content drift, including malformed
+    frontmatter, undeclared types, missing required fields and subdirectory
+    mismatches. A KB name limits the report to that KB.
 
     Exit code: 0 clean, 1 if any KB has structural errors or the index is
     corrupt (STORAGE_ERROR: the check cannot be made), 2 if only
@@ -310,7 +309,7 @@ def kb_validate(
         return [row for row in health.get(field, []) if row.get("kb") == kb_name]
 
     # Collect results for all KBs
-    kb_results = []
+    kb_results: list[dict[str, Any]] = []
     any_structural_errors = False
     any_drift = False
     for kb in kbs:
