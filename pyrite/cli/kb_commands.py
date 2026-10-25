@@ -321,7 +321,11 @@ def kb_validate(
         undeclared = _for_kb(kb.name, "undeclared_types")
         missing_req = _for_kb(kb.name, "missing_required_fields")
         sub_mismatch = _for_kb(kb.name, "subdirectory_mismatches")
-        if undeclared or missing_req or sub_mismatch:
+        malformed = [
+            {**row, "path": str(Path(row["path"]).relative_to(kb.path))}
+            for row in _for_kb(kb.name, "malformed_frontmatter")
+        ]
+        if undeclared or missing_req or sub_mismatch or malformed:
             any_drift = True
 
         kb_results.append(
@@ -332,6 +336,7 @@ def kb_validate(
                 "undeclared_types": undeclared,
                 "missing_required_fields": missing_req,
                 "subdirectory_mismatches": sub_mismatch,
+                "malformed_frontmatter": malformed,
             }
         )
 
@@ -375,6 +380,10 @@ def kb_validate(
                     if not any(p.startswith(".") for p in f.parts)
                 )
                 console.print(f"  [green]✓[/green] {count} markdown files found")
+
+        for row in kb_res["malformed_frontmatter"]:
+            console.print(path_line("  [red]Malformed:[/red] ", row["path"]))
+            console.print(f"    {row['error']}", markup=False, highlight=False)
 
         if kb_res["undeclared_types"]:
             console.print(
