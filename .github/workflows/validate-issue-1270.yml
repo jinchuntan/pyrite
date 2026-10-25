@@ -1,0 +1,58 @@
+name: Validate issue 1270
+
+on:
+  push:
+    branches: [process/validate-issue-1270]
+
+permissions:
+  contents: read
+
+jobs:
+  affected-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 09a60f25eb96138196f117e3232dce38fc935553
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v5
+      - name: Install the project and extensions
+        run: |
+          uv venv .venv
+          uv pip install --python .venv/bin/python -e ".[all]"
+          for ext in extensions/*/; do
+            if [ -f "$ext/pyproject.toml" ]; then
+              uv pip install --python .venv/bin/python -e "$ext"
+            fi
+          done
+      - name: Cache the model required by semantic-search tests
+        run: |
+          .venv/bin/python - <<'PY'
+          from sentence_transformers import SentenceTransformer
+          SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", trust_remote_code=False)
+          PY
+      - name: Check lint and formatting
+        run: |
+          .venv/bin/ruff check pyrite/ tests/ extensions/
+          .venv/bin/ruff format --check pyrite/ tests/ extensions/
+      - name: Run the affected tests on the exact contribution commit
+        env:
+          HF_HUB_OFFLINE: "1"
+        run: |
+          set -euo pipefail
+          scripts/test-affected --run --base 49bfa74dc7166e487bfd3459854a27f850bca010 -n 4 2>&1 | tee affected-tests.log
+      - name: Save the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: affected-tests-python-${{ matrix.python }}
+          path: affected-tests.log
