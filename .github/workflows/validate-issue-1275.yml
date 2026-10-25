@@ -1,29 +1,22 @@
-name: Validate issue 1275
-
+name: Validate issue 1275 core suite
 on:
   push:
     branches: [process/validate-issue-1275]
-
 permissions:
   contents: read
-
 jobs:
-  affected-tests:
+  full-core:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.12"]
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 6bf5f0e1a972cdf5ef038bc961c15317dc8a33e3
+          ref: 4c05a89523ed733ea139f2c92264f792da2e8099
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
       - name: Install the project and extensions
         run: |
@@ -34,7 +27,7 @@ jobs:
               uv pip install --python .venv/bin/python -e "$ext"
             fi
           done
-      - name: Cache the model required by semantic-search tests
+      - name: Cache the semantic search model
         run: |
           .venv/bin/python - <<'PY'
           from sentence_transformers import SentenceTransformer
@@ -44,15 +37,15 @@ jobs:
         run: |
           .venv/bin/ruff check pyrite/ tests/ extensions/
           .venv/bin/ruff format --check pyrite/ tests/ extensions/
-      - name: Run the affected tests on the exact contribution commit
+      - name: Run the full core suite on the exact fix commit
         env:
           HF_HUB_OFFLINE: "1"
         run: |
           set -euo pipefail
-          scripts/test-affected --run --base 49bfa74dc7166e487bfd3459854a27f850bca010 -n 4 2>&1 | tee affected-tests.log
+          .venv/bin/python scripts/heavy_lock.py -- .venv/bin/pytest tests/ extensions/ -n 4 -m "not slow and not e2e and not experimental" -q 2>&1 | tee core-tests.log
       - name: Save the test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: affected-tests-python-${{ matrix.python }}
-          path: affected-tests.log
+          name: issue-1275-core-tests
+          path: core-tests.log

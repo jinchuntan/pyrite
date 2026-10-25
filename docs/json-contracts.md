@@ -1436,7 +1436,7 @@ checked against each command's Typer signature by
 |---|---|---|
 | `create` | yes (shared) | `json` |
 | `add` | yes (shared) | `json` |
-| `delete` | none | Rich text, always (it asks before it deletes) |
+| `delete` | yes (own option) | `rich` |
 | `link` | yes (shared) | `json` |
 | `update` | yes (shared) | `json` |
 | `rename` | yes (shared) | `json` |
