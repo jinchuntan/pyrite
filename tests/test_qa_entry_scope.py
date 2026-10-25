@@ -53,3 +53,12 @@ def test_named_kb_and_all_kbs_still_work(world):
     all_kbs = world.cli("qa", "validate")
     assert all_kbs.exit_code == 0, all_kbs.output
     assert {i["kb_name"] for i in json.loads(all_kbs.stdout)["issues"]} == {"alpha", "beta"}
+
+
+@pytest.mark.control(reason="QA still diagnoses a missing entry when its KB is explicitly named")
+def test_named_kb_keeps_the_qa_missing_entry_diagnostic(world):
+    result = world.cli("qa", "validate", "alpha", "--entry", "absent")
+
+    assert result.exit_code == 1, result.output
+    body = json.loads(result.stdout)
+    assert body["issues"][0]["rule"] == "entry_not_found"
