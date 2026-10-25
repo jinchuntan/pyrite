@@ -3160,7 +3160,9 @@ class SoftwareKBPlugin:
             }
 
             config = self._get_config()
-            saved = KBService(config, db).create_entry(
+            svc = KBService(config, db)
+            kb_config = svc.require_kb(kb_name)
+            saved = svc.create_entry(
                 kb_name,
                 log_id,
                 f"Work session for {entry['title']}",
@@ -3178,12 +3180,12 @@ class SoftwareKBPlugin:
                 "frontmatter": frontmatter,
                 "body": summary,
                 "link": link,
-                "filename": _saved_filename(config.get_kb(kb_name), saved),
+                "filename": _saved_filename(kb_config, saved),
             }
         except PyriteError as exc:
             refused = {"created": False, "error": _safe_error(exc), "error_code": exc.error_code}
             if isinstance(exc, SchemaViolationError):
-                schema = self._get_config().get_kb(kb_name).kb_schema
+                schema = kb_config.kb_schema
                 if "work_log" not in schema.types:
                     refused["suggestion"] = (
                         "Add work_log under types: in this KB's kb.yaml, with "
