@@ -1042,6 +1042,7 @@ class SoftwareKBPlugin:
             if epic_filter:
                 from pyrite.services.kb_service import KBService
 
+                # A locates_entry declaration would require an epic even for ordinary lists.
                 kb_name = KBService(self._get_config(), db).locate(
                     epic_filter,
                     kb_name,
