@@ -34,7 +34,7 @@ from ..authz import authorize
 from ..schemas import (
     CreateEntryRequest,
     CreateResponse,
-    DeleteResponse,
+    EntryDeleteResponse,
     EntryListResponse,
     EntryResponse,
     EntryTitle,
@@ -996,7 +996,7 @@ def patch_entry_field(
 
 @router.delete(
     "/entries/{entry_id}",
-    response_model=DeleteResponse,
+    response_model=EntryDeleteResponse,
     dependencies=[Depends(requires_kb_tier("write"))],
 )
 @limiter.limit("30/minute")
@@ -1005,10 +1005,11 @@ def delete_entry(
     entry_id: str,
     kb: str = Query(..., description="KB name"),
     svc: KBService = Depends(get_kb_service),
+    scope: ReadScope = Depends(authorize(Action.KB_READ, KB)),
 ):
     """Delete an entry."""
     try:
-        deleted = svc.delete_entry(entry_id, kb)
+        deleted = svc.delete_entry(entry_id, kb, readable_kbs=scope.as_set())
     except EntryNotFoundError as e:
         # A KBNotFoundError is never caught here: the write tier resolves the
         # named KB before the handler runs (#952), and one that still arrives
@@ -1031,4 +1032,4 @@ def delete_entry(
 
     broadcast_event("entry_deleted", entry_id=entry_id, kb_name=kb)
 
-    return DeleteResponse(deleted=True, id=entry_id)
+    return EntryDeleteResponse(id=entry_id, **deleted.as_dict())
