@@ -7,7 +7,7 @@ Commands: validate, status, assess
 import typer
 from rich.table import Table
 
-from ..services.access_policy import UNSCOPED
+from ..services.access_policy import UNSCOPED, named_kb
 from .context import cli_context, require_entry_kb
 from .output import cli_console, output_format_choice, validate_output_format
 
@@ -44,7 +44,7 @@ def qa_validate(
     """
     from ..services.qa_service import QAService
 
-    if entry:
+    if entry and not named_kb(kb_name):
         kb_name = require_entry_kb(entry, kb_name, output_format=output_format)
 
     with cli_context(kbs=(kb_name,), output_format=output_format) as (config, db, svc):
