@@ -187,7 +187,7 @@ CLI and MCP report the code without an HTTP status.
 | `BRANDING_INVALID` | Branding configuration, REST 500 | Ask the operator to repair `branding.yaml`; repeating the request will not fix configuration. |
 | `INTERNAL_ERROR` | Unclassified domain failure, REST 500 | Consult the server log; do not assume retrying is safe. |
 
-### MCP operation codes
+## MCP operation codes
 
 These codes are also emitted directly by MCP handlers. Domain exceptions
 use the shared codes above and in the write-refusal table below. The legacy
