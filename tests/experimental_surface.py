@@ -234,6 +234,7 @@ AUTHZ, SCOPE, CONTAIN, CRED, ORACLE, ESCAPE = SECURITY_PROPERTIES
 # Every test of a security property, found by reading the files. Whole files
 # first, then the security cases inside files that are otherwise experimental.
 NEVER_EXPERIMENTAL: dict[str, str] = {
+    "tests/test_csv_spreadsheet_safe.py": ESCAPE,
     # -- the characterization oracle (ADR-0037 theme 0) --
     "tests/characterization/*": ORACLE,
     # -- authorization --
