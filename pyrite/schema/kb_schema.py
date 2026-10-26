@@ -17,6 +17,14 @@ from .validators import validate_date
 logger = logging.getLogger(__name__)
 
 
+def exclusion_patterns(data: dict[str, Any]) -> list[str]:
+    """Read file exclusions without parsing unrelated type definitions."""
+    exclude = data.get("exclude", [])
+    if not isinstance(exclude, list) or any(not isinstance(p, str) for p in exclude):
+        raise ValueError("kb.yaml exclude must be a list of path patterns")
+    return exclude
+
+
 def _core_field_type(spelled: str) -> str:
     """A ``CORE_TYPES`` field's Python spelling as a ``FieldSchema`` type:
     ``int`` a number, ``list[...]`` a list, ``dict`` ``object`` (no kb.yaml
@@ -61,9 +69,7 @@ class KBSchema:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "KBSchema":
         """Create from dictionary."""
-        exclude = data.get("exclude", [])
-        if not isinstance(exclude, list) or any(not isinstance(p, str) for p in exclude):
-            raise ValueError("kb.yaml exclude must be a list of path patterns")
+        exclude = exclusion_patterns(data)
         types = {}
         for type_name, type_data in data.get("types", {}).items():
             if isinstance(type_data, dict):

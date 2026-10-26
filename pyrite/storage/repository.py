@@ -13,6 +13,7 @@ import stat
 from collections.abc import Callable, Iterator, Set
 from dataclasses import dataclass
 from fnmatch import fnmatchcase
+from functools import cached_property
 from pathlib import Path
 
 from ..config import KBConfig
@@ -1207,6 +1208,23 @@ class KBRepository:
             if self._listed(md_file):
                 yield md_file
 
+    @cached_property
+    def _exclusions(self) -> list[str]:
+        """Read only exclusions; a broken type schema must remain inspectable.
+
+        Health and validation report malformed kb.yaml separately. If exclusions
+        cannot be read, include the files rather than silently hiding them.
+        """
+        from ..schema.kb_schema import exclusion_patterns
+
+        if not self.config.kb_yaml_path.exists():
+            return []
+        try:
+            return exclusion_patterns(load_yaml_file(self.config.kb_yaml_path))
+        except Exception as exc:
+            logger.warning("Could not read exclusions from %s: %s", self.config.kb_yaml_path, exc)
+            return []
+
     def _listed(self, md_file: Path) -> bool:
         """Whether ``list_files`` walks ``md_file``; ``find_file`` uses the
         same rule, so what sync indexes is what lookup finds."""
@@ -1232,7 +1250,7 @@ class KBRepository:
         if "_templates" in parts:
             return False
         relative = "/".join(parts)
-        for pattern in self.config.kb_schema.exclude:
+        for pattern in self._exclusions:
             pattern = pattern.rstrip("/")
             candidates = ["/".join(parts[:n]) for n in range(1, len(parts) + 1)]
             if "/" not in pattern:

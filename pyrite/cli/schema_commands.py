@@ -391,21 +391,9 @@ def schema_migrate(
 
 def _collect_md_files(paths: list[Path]) -> list[Path]:
     """Resolve paths to a flat list of .md files."""
-    result: list[Path] = []
-    for p in paths:
-        if p.is_file() and p.suffix == ".md":
-            result.append(p)
-        elif p.is_dir():
-            from ..config import KBConfig
-            from ..storage.repository import KBRepository
+    from ..services.file_listing import collect_markdown_files
 
-            root = next((d for d in (p, *p.parents) if (d / "kb.yaml").is_file()), None)
-            if root is None:
-                result.extend(sorted(p.rglob("*.md")))
-            else:
-                repo = KBRepository(KBConfig(name=root.name, path=root))
-                result.extend(sorted(f for f in repo.list_files() if f.is_relative_to(p.resolve())))
-    return result
+    return collect_markdown_files(paths)
 
 
 def _get_git_changed_md_files(kbs: list | None = None) -> list[Path]:
@@ -455,15 +443,9 @@ def _get_git_changed_md_files(kbs: list | None = None) -> list[Path]:
         if not kbs:
             return []
 
-        from ..storage.repository import KBRepository
+        from ..services.file_listing import filter_listed_paths
 
-        repositories = [KBRepository(kb) for kb in kbs]
-
-        def _under_a_kb(p: Path) -> bool:
-            resolved = p.resolve()
-            return any(repo._listed(resolved) for repo in repositories)
-
-        return [f for f in md_files if _under_a_kb(f)]
+        return filter_listed_paths(md_files, kbs)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return []
 

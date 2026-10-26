@@ -67,3 +67,20 @@ def test_invalid_exclusion_lists_are_reported(exclude):
 
     with pytest.raises(ValueError, match="exclude must be a list of path patterns"):
         KBSchema.from_dict({"exclude": exclude})
+
+
+@pytest.mark.parametrize("types", ["[]", "null"])
+def test_broken_type_definitions_do_not_disable_exclusions(tmp_path, types):
+    (tmp_path / "kb.yaml").write_text(f"types: {types}\nexclude: ['skip.md']\n")
+    kept = tmp_path / "keep.md"
+    kept.write_text("body")
+    (tmp_path / "skip.md").write_text("body")
+    assert list(KBRepository(KBConfig(name="demo", path=tmp_path)).list_files()) == [kept]
+
+
+def test_unreadable_exclusions_keep_files_available_for_health_checks(tmp_path, caplog):
+    (tmp_path / "kb.yaml").write_text("types: [broken\n")
+    kept = tmp_path / "keep.md"
+    kept.write_text("body")
+    assert list(KBRepository(KBConfig(name="demo", path=tmp_path)).list_files()) == [kept]
+    assert "Could not read exclusions" in caplog.text

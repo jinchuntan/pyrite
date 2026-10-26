@@ -173,11 +173,9 @@ def export_collection(
                 if kb_config:
                     folder = kb_config.path / collection.folder_path
                     if folder.exists():
-                        from ..storage.repository import KBRepository
+                        from ..services.file_listing import listed_markdown_files
 
-                        for md_file in sorted(KBRepository(kb_config).list_files()):
-                            if not md_file.is_relative_to(folder):
-                                continue
+                        for md_file in listed_markdown_files(kb_config, folder):
                             if md_file.name.startswith("__"):
                                 continue
                             try:
@@ -280,11 +278,15 @@ def export_site(
 
         # Load full Entry objects from disk
         entries = []
-        from ..storage.repository import KBRepository
+        from ..services.file_listing import filter_listed_paths
 
-        repo = KBRepository(kb_config)
+        visible = set(
+            filter_listed_paths(
+                [Path(row["file_path"]) for row in raw_entries if row.get("file_path")], [kb_config]
+            )
+        )
         for row in raw_entries:
-            if row.get("file_path") and not repo._listed(Path(row["file_path"])):
+            if row.get("file_path") and Path(row["file_path"]) not in visible:
                 continue
             entry = _load_entry_from_result(row, svc, kb)
             if entry:
