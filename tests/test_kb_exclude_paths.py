@@ -45,3 +45,25 @@ def test_excluded_files_do_not_enter_kb_walks(tmp_path, surface):
             assert not list(output.rglob("skip*.md"))
     finally:
         world.close()
+
+
+@pytest.mark.parametrize("pattern", ["drafts", "drafts/", "drafts/**", "**/drafts/**"])
+def test_exclusions_cover_collection_files_and_nested_directories(tmp_path, pattern):
+    (tmp_path / "kb.yaml").write_text(f"exclude: ['{pattern}']\n")
+    folder = tmp_path / "drafts"
+    (folder / "nested").mkdir(parents=True)
+    (folder / "nested" / "hidden.md").write_text("---\nid: hidden\ntitle: Hidden\n---\n")
+    (folder / "__collection.yaml").write_text("title: Hidden collection\n")
+    kept = tmp_path / "kept.md"
+    kept.write_text("---\nid: kept\ntitle: Kept\n---\n")
+    repo = KBRepository(KBConfig(name="demo", path=tmp_path))
+    assert list(repo.list_all_files()) == [kept]
+    assert repo.count() == 1
+
+
+@pytest.mark.parametrize("exclude", [None, "drafts", ["valid", 1]])
+def test_invalid_exclusion_lists_are_reported(exclude):
+    from pyrite.schema.kb_schema import KBSchema
+
+    with pytest.raises(ValueError, match="exclude must be a list of path patterns"):
+        KBSchema.from_dict({"exclude": exclude})
