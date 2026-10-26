@@ -13,7 +13,13 @@ from pyrite.storage.schema_repair import REBUILD_SUGGESTION, repair_schema
     "default",
     ["CURRENT_TIMESTAMP", "CURRENT_DATE", "CURRENT_TIME", "(1 + 2)", "stored"],
 )
-@pytest.mark.parametrize("populated", [False, True])
+@pytest.mark.parametrize(
+    "populated",
+    [
+        pytest.param(False, marks=pytest.mark.control(reason="empty-table repairs already worked")),
+        True,
+    ],
+)
 def test_non_constant_default_requires_an_empty_table(default, populated):
     metadata = MetaData()
     extra = (
