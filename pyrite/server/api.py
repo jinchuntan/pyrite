@@ -1124,7 +1124,11 @@ def negotiate_response(request: Request, data: Any, **kwargs) -> Response | None
     if fmt == "json":
         return None  # Use default
 
-    if fmt == "csv" and request.query_params.get("csv_safe", "").lower() in ("true", "1"):
+    if (
+        fmt == "csv"
+        and request.scope.get("query_string")
+        and request.query_params.get("csv_safe", "").lower() in ("true", "1")
+    ):
         fmt = "csv-safe"
 
     content, media_type = format_response(data, fmt, **kwargs)
