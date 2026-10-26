@@ -1,0 +1,52 @@
+{
+  "base": "b1a1820c924fca269723659cb65dea4a655b5d6c",
+  "contributions": [
+    {
+      "issue": 1318,
+      "branch": "fix/schema-repair-defaults",
+      "sha": "89c3c7d70366d779db745435ce5653b6ffd3e2dc"
+    },
+    {
+      "issue": 1254,
+      "branch": "fix/security-type-annotations",
+      "sha": "62c9bf0c5c77235f3b4c822f266d66137d7b17d2",
+      "tree": "988c359a22bf09dffb0224947155cd10c1290024"
+    },
+    {
+      "issue": 1325,
+      "branch": "fix/export-site-load-failures",
+      "sha": "3e0cbe806c909b0cd4f3758345233ef66abf8c82",
+      "tree": "21d6ddbb456615f0eba961b58019923bbaa33087"
+    },
+    {
+      "issue": 1332,
+      "branch": "fix/task-metadata-loading",
+      "sha": "af09c2032b63643dd1b4900a9441f8c483dfa258",
+      "tree": "762ebd1f2870e7ddc3e12bdb74e2484135e78a56"
+    },
+    {
+      "issue": 672,
+      "branch": "docs/test-stage-contracts",
+      "sha": "dda817387c78683d7bbcba1f2938149c47c96fcf",
+      "tree": "b6e77a37da80a9f032afb8b5ef37935d4c5084e7"
+    },
+    {
+      "issue": 1300,
+      "branch": "fix/kb-file-exclusions",
+      "sha": "e87ba271f32fc166d31fecb58283d773df00edfb",
+      "tree": "f2a5c64c821676b3b31c7c48922634958f3e8c6d"
+    },
+    {
+      "issue": 1274,
+      "branch": "fix/undeclared-link-relations",
+      "sha": "a6db77a55a150fc165db52cda53d113b6e99b341",
+      "tree": "59b680f7cd20dbb68eac394857e3fa5adf7a3492"
+    },
+    {
+      "issue": 1171,
+      "branch": "docs/component-reference-checks",
+      "sha": "afe866fa1e3aef5170ac2c9c64f2541c03b1ae7d",
+      "tree": "187df38e5a71a924e99be3ca3f7bd12726a8b023"
+    }
+  ]
+}
