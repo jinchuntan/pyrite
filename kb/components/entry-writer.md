@@ -17,12 +17,14 @@ The invariants it keeps are [[adr-0042]] decision 10 (writes are optimistic: mer
 
 ## Public functions (line numbers on this branch)
 
-- `publish_entry_text(path, text, *, expect, lock_timeout)` — `pyrite/storage/entry_writer.py:386`; replace `path` if it still holds `expect`, else `FileChanged` (nothing written); returns whether the replace ran under the lock
-- `create_entry_text(path, text)` — :139; write to a path that must not exist, `FileExistsError` if it does; exclusivity comes from the publishing call, never from an `exists()` check
-- `move_entry_text(src, expect, dst, text, *, lock_timeout)` — :211; publish `text` at `dst` (must not exist) and remove `src` (must still hold `expect`), as one write under one lock for both paths
-- `publish_exclusive(tmp, path)` — :287; the exclusive publish (`os.link`, else `O_CREAT | O_EXCL`) the two above share
-- `updated_at_stamp(old, raw)` — :90 and `raw_scalar(yaml_text, key)` :79; the `updated_at` bookkeeping in the file's own spelling, stamped only where the file carries the key ([[adr-0042]] decision 7)
+- `publish_entry_text(path, text, *, expect, lock_timeout)` — `pyrite/storage/entry_writer.py:198`; replace `path` if it still holds `expect`, else `FileChanged` (nothing written); returns whether the replace ran under the lock
+- `create_entry_text(path, text)` — :147; write to a path that must not exist, `FileExistsError` if it does; exclusivity comes from the publishing call, never from an `exists()` check
+- `move_entry_text(src, expect, dst, text, *, lock_timeout)` — :166; publish `text` at `dst` (must not exist) and remove `src` (must still hold `expect`), as one write under one lock for both paths
+- `updated_at_stamp(old, raw)` — :98 and `raw_scalar(yaml_text, key)` :87; the `updated_at` bookkeeping in the file's own spelling, stamped only where the file carries the key ([[adr-0042]] decision 7)
 - `FileChanged` — re-exported from `pyrite/utils/atomic_write.py`
+
+Publishing delegates to `KBFiles.write_bytes` and `KBFiles.move_bytes` in
+`pyrite/utils/kb_files.py`; the exclusive create uses `expect=ABSENT`.
 
 ## Who calls it
 

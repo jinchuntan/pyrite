@@ -31,7 +31,7 @@ The invariant it keeps (a write changes what was asked and nothing else, and its
 
 Every write of an entry file computes its new text here, then publishes it through [[entry-writer]] ([[adr-0042]] decision 12):
 
-- `KBService._update` and `KBService.apply_operations` (`pyrite/services/kb_service.py:1835`, :1818) — an update, a link, a field write. Change an existing entry through `apply_operations`; nothing else writes one.
+- `KBService._update` and `KBService.apply_operations` (`pyrite/services/kb_service.py:1951`, :1934) — an update, a link, a field write. Change an existing entry through `apply_operations`; nothing else writes one.
 - `repository.new_entry_text` — a create's text, `apply` onto a skeleton ([[adr-0042]] decision 13); `KBRepository.rename` and the wikilink rewrite `_rewrite_as_values` (`pyrite/storage/repository.py:162`) — see [[kb-repository]]
 - `TaskService`, `QAFixService`, `SchemaService` (`schema migrate`, `pyrite/services/schema_service.py:177`) and software-kb's `migrate-standards` (`extensions/software-kb/src/pyrite_software_kb/cli.py:723`)
 - `IndexManager` (`pyrite/storage/index.py:392`, :1537) — the `unmodellable_*` check, so `index health` and `qa validate` list a file exactly when `apply` would refuse it
