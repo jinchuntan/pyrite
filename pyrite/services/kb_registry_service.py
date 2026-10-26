@@ -538,9 +538,10 @@ class KBRegistryService:
 
         file_count = 0
         if path_exists:
-            file_count = sum(
-                1 for f in kb_path.rglob("*.md") if not any(p.startswith(".") for p in f.parts)
-            )
+            from ..storage.repository import KBRepository
+
+            kb_config = self.get_kb_config(name)
+            file_count = sum(1 for _ in KBRepository(kb_config).list_files()) if kb_config else 0
 
         from .index_health import health_verdict
 

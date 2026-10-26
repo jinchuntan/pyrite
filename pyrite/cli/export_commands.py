@@ -173,7 +173,11 @@ def export_collection(
                 if kb_config:
                     folder = kb_config.path / collection.folder_path
                     if folder.exists():
-                        for md_file in sorted(folder.rglob("*.md")):
+                        from ..storage.repository import KBRepository
+
+                        for md_file in sorted(KBRepository(kb_config).list_files()):
+                            if not md_file.is_relative_to(folder):
+                                continue
                             if md_file.name.startswith("__"):
                                 continue
                             try:
@@ -276,7 +280,12 @@ def export_site(
 
         # Load full Entry objects from disk
         entries = []
+        from ..storage.repository import KBRepository
+
+        repo = KBRepository(kb_config)
         for row in raw_entries:
+            if row.get("file_path") and not repo._listed(Path(row["file_path"])):
+                continue
             entry = _load_entry_from_result(row, svc, kb)
             if entry:
                 entries.append(entry)

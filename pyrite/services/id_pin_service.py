@@ -331,7 +331,7 @@ def scan(kb_config: KBConfig) -> IdScan:
         holders[current].append({"path": rel, "explicit": explicit})
 
     # __collection.yaml files hold ids too (``collection-<folder>``)
-    for path in sorted(repo.path.rglob("__collection.yaml")):
+    for path in sorted(repo.list_collection_files()):
         current = repo.id_of_file(path)
         if current and not any(part.startswith(".") for part in path.parts):
             holders[current].append({"path": _rel(root, path), "explicit": True})

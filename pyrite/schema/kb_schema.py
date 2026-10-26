@@ -46,6 +46,7 @@ class KBSchema:
     goals: dict[str, str] = field(default_factory=dict)
     evaluation_rubric: list[str | dict[str, Any]] = field(default_factory=list)
     rubric_action: str = "fail"
+    exclude: list[str] = field(default_factory=list)
 
     @classmethod
     def from_yaml(cls, path: Path) -> "KBSchema":
@@ -60,6 +61,9 @@ class KBSchema:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "KBSchema":
         """Create from dictionary."""
+        exclude = data.get("exclude", [])
+        if not isinstance(exclude, list) or any(not isinstance(p, str) for p in exclude):
+            raise ValueError("kb.yaml exclude must be a list of path patterns")
         types = {}
         for type_name, type_data in data.get("types", {}).items():
             if isinstance(type_data, dict):
@@ -128,6 +132,7 @@ class KBSchema:
             goals=data.get("goals", {}),
             evaluation_rubric=data.get("evaluation_rubric", []),
             rubric_action=rubric_action,
+            exclude=exclude,
         )
 
     def get_type_schema(self, entry_type: str) -> TypeSchema | None:

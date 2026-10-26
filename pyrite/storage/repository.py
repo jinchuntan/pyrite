@@ -12,6 +12,7 @@ import os
 import stat
 from collections.abc import Callable, Iterator, Set
 from dataclasses import dataclass
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 from ..config import KBConfig
@@ -588,7 +589,7 @@ class KBRepository:
             for subdir in self.path.rglob(glob.escape(folder_name)):
                 if subdir.is_dir():
                     yaml_path = subdir / "__collection.yaml"
-                    if yaml_path.exists():
+                    if yaml_path.exists() and self._listed(yaml_path):
                         yield yaml_path
 
     def id_of_file(self, file_path: Path) -> str | None:
@@ -1230,16 +1231,29 @@ class KBRepository:
         # Skip template scaffold files in _templates directories
         if "_templates" in parts:
             return False
+        relative = "/".join(parts)
+        for pattern in self.config.kb_schema.exclude:
+            pattern = pattern.rstrip("/")
+            candidates = ["/".join(parts[:n]) for n in range(1, len(parts) + 1)]
+            if "/" not in pattern:
+                candidates = list(parts)
+            if any(fnmatchcase(candidate, pattern) for candidate in candidates):
+                return False
+            if pattern.startswith("**/") and fnmatchcase(relative, pattern[3:]):
+                return False
         # Skip README files (case-insensitive) — they lack frontmatter
         return md_file.name.lower() != "readme.md"
 
     def list_all_files(self) -> Iterator[Path]:
         """Iterate over all entry file paths (md + collection yaml) without parsing."""
         yield from self.list_files()
-        for yaml_file in self.path.rglob("__collection.yaml"):
-            if any(part.startswith(".") for part in yaml_file.parts):
-                continue
-            yield yaml_file
+        yield from self.list_collection_files()
+
+    def list_collection_files(self) -> Iterator[Path]:
+        """Collection paths, with the same visibility rule as Markdown files."""
+        for path in self.path.rglob("__collection.yaml"):
+            if self._listed(path):
+                yield path
 
     def load_entry_from_bytes(self, file_path: Path, raw: bytes) -> Entry:
         """``load_entry_from_file`` of ``raw``, the file's bytes as already read.
@@ -1292,9 +1306,7 @@ class KBRepository:
                 continue
 
         # Discover __collection.yaml files
-        for yaml_file in self.path.rglob("__collection.yaml"):
-            if any(part.startswith(".") for part in yaml_file.parts):
-                continue
+        for yaml_file in self.list_collection_files():
             try:
                 entry = self._load_collection(yaml_file)
                 entry.kb_name = self.name
@@ -1313,11 +1325,7 @@ class KBRepository:
     def count(self) -> int:
         """Count total entries in the KB."""
         md_count = sum(1 for _ in self.list_files())
-        yaml_count = sum(
-            1
-            for f in self.path.rglob("__collection.yaml")
-            if not any(part.startswith(".") for part in f.parts)
-        )
+        yaml_count = sum(1 for _ in self.list_collection_files())
         return md_count + yaml_count
 
     def search_files(self, query: str) -> Iterator[tuple[Entry, Path]]:

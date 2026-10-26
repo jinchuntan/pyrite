@@ -1,5 +1,23 @@
 # Configuration
 
+## Excluding KB files
+
+Put an `exclude` list in the KB's `kb.yaml` to omit files from indexing,
+validation, QA and exports:
+
+```yaml
+exclude:
+  - 'drafts/**'
+  - '*.scratch.md'
+```
+
+Patterns are case-sensitive, use `/` separators, and match paths relative to
+the KB root. A pattern without `/` matches a filename or directory name at
+any depth. A directory match excludes its descendants; `**/` also matches
+at the root. An empty or absent list keeps the usual file selection.
+Run `pyrite index sync` after changing the list to remove excluded rows from
+the index. Files are kept on disk.
+
 Pyrite reads `~/.pyrite/config.yaml` (or `$PYRITE_CONFIG_DIR/config.yaml`), then
 applies `PYRITE_*` environment variables on top. An environment variable always
 wins when it is set. Nothing here is required: a fresh install works with no
