@@ -1124,9 +1124,23 @@ def _handler_findings(module: _Module, handler) -> tuple[bool, list[str]]:
         if isinstance(exc, ast.Call) and _callee(module, exc) & _CLASSIFIERS:
             continue
         findings.append(f"raises {ast.unparse(exc)[:60]}")
+    if not any(isinstance(node, ast.Raise) for node in nodes):
+        findings.append("does not re-raise or raise the classifier result")
+    for node in nodes:
+        if isinstance(node, ast.Return):
+            findings.append("returns instead of raising the classifier result")
     for node in nodes:
         if isinstance(node, ast.Call) and _callee(module, node) & _ERROR_EMITTERS:
             findings.append(f"reports with {ast.unparse(node.func)}")
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "setattr"
+            and len(node.args) > 1
+            and isinstance(node.args[1], ast.Constant)
+            and node.args[1].value == "suggestion"
+        ):
+            findings.append("sets suggestion with setattr after the classifier")
         if isinstance(node, ast.Assign | ast.AugAssign):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
             for target in targets:
@@ -1171,6 +1185,31 @@ def _conversion_sites(root: Path = _PYRITE_ROOT) -> dict[str, list[str]]:
 #: why that is right. Keyed as `_conversion_sites` keys them; an entry that no
 #: longer matches a site with findings fails the test, so the list cannot rot.
 NOT_THE_CLASSIFIERS_JOB = {
+    "pyrite.cli.context:open_index_for_validation:(OSError, sqlite3.Error, SQLAlchemyError)": (
+        "logs the unavailable index and explicitly skips content-drift checks; "
+        "validation still reads the YAML configuration and files"
+    ),
+    "pyrite.cli.context:open_index_for_validation:(sqlite3.Error, SQLAlchemyError)": (
+        "closes the failed index handle and returns the same explicit file-only validation fallback"
+    ),
+    "pyrite.cli.context:get_config_with_registered_kbs:(OSError, sqlite3.Error, SQLAlchemyError, StorageError)": (
+        "logs the unavailable optional registry and continues with YAML configuration; converts no error"
+    ),
+    "pyrite.services.id_pin_service:_registered_kb:sqlite3.Error": (
+        "logs a failed optional registry lookup and returns no match; pinning a configured KB needs no index"
+    ),
+    "pyrite.storage.kb_ops:KBOpsMixin.insert_new_kb:IntegrityError": (
+        "rolls back a duplicate registration and returns False; this is a constraint conflict, not a storage diagnosis"
+    ),
+    "pyrite.storage.kb_ops:KBOpsMixin.merge_registered_kbs:SQLAlchemyError": (
+        "logs a registry read failure and keeps the YAML catalog; converts no exception to a public error"
+    ),
+    "pyrite.storage.kb_ops:KBOpsMixin._record_private_policy:SQLAlchemyError": (
+        "logs a failed policy backfill; the private policy already applies in memory for this load"
+    ),
+    "pyrite.storage.schema_repair:recorded_version:sqlite3.OperationalError": (
+        "returns no recorded version for refusal diagnostics when the schema_version table cannot be queried"
+    ),
     "pyrite.storage.migrations:MigrationManager._apply_migration:Exception": (
         "wraps the fault as MigrationError with it as __cause__; "
         "connection._run_migrations, the one caller on the open path, classifies that"
@@ -1268,6 +1307,45 @@ def test_the_scan_sees_every_known_site():
 
 
 _SCRATCH_TRICKS = {
+    "returns an error mapping": """
+import sqlite3
+def read(conn):
+    try:
+        conn.execute("SELECT 1")
+    except sqlite3.Error as exc:
+        return {"error": str(exc)}
+""",
+    "echoes and returns a status": """
+import sqlite3
+import typer
+def read(conn):
+    try:
+        conn.execute("SELECT 1")
+    except sqlite3.Error as exc:
+        typer.echo(str(exc))
+        return 1
+""",
+    "calls a helper that raises": """
+import sqlite3
+def refuse(exc):
+    raise ValueError(str(exc))
+def read(conn):
+    try:
+        conn.execute("SELECT 1")
+    except sqlite3.Error as exc:
+        refuse(exc)
+""",
+    "sets classifier advice with setattr": """
+import sqlite3
+from pyrite.storage.errors import storage_error_from
+def read(conn):
+    try:
+        conn.execute("SELECT 1")
+    except sqlite3.Error as exc:
+        err = storage_error_from(exc, "failed")
+        setattr(err, "suggestion", "rebuild")
+        raise err
+""",
     # Round 1 review (a): a second handler in a classified function.
     "a second handler in a classified function": """
 import sqlite3
