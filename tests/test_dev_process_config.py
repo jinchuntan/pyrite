@@ -141,13 +141,32 @@ class TestCIWorkflow:
     def test_no_duplicate_full_suite_job(self, ci):
         assert "test-optional-deps" not in ci["jobs"]
 
-    def test_matrix_is_one_interpreter_on_pull_requests_and_all_on_pushes(self, ci):
-        # `test (3.12)` is the required check for PRs; dev and main pushes run
-        # the whole matrix (ADR-0032 §3 value chain).
+    @pytest.mark.parametrize(
+        ("stage", "branch", "versions"),
+        [
+            ("Ordinary pull request", 0, ["3.12"]),
+            ("Infrastructure pull request", 3, ["3.11", "3.12", "3.13"]),
+            ("Merge queue", 1, ["3.13"]),
+            ("Push after a successful queue run", 2, ["3.11", "3.12"]),
+            ("Other push", 3, ["3.11", "3.12", "3.13"]),
+        ],
+    )
+    def test_documented_interpreters_match_each_ci_stage(self, ci, stage, branch, versions):
+        import json
+        import re
+
         matrix = str(ci["jobs"]["test"]["strategy"]["matrix"]["python-version"])
-        assert "github.event_name == 'pull_request'" in matrix
-        assert '["3.12"]' in matrix
-        assert '["3.11", "3.12", "3.13"]' in matrix
+        assert matrix == ci["jobs"]["collect"]["strategy"]["matrix"]["python-version"]
+        # Pin the branch predicates as well as their values; this is the four
+        # branches of this expression, not a GitHub expression interpreter.
+        assert matrix.split("fromJSON(", 1)[1].split("'[", 1)[0] == (
+            "(github.event_name == 'pull_request' && needs.changes.outputs.infra != 'true') && "
+        )
+        assert "|| github.event_name == 'merge_group' &&" in matrix
+        assert "|| needs.changes.outputs.queue_passed == 'true' &&" in matrix
+        assert json.loads(re.findall(r"'(\[[^']+\])'", matrix)[branch]) == versions
+        guide = (REPO / "CONTRIBUTING.md").read_text()
+        assert f"| {stage} | {', '.join(versions)} |" in guide
 
 
 class TestExtensionsLintParity:

@@ -139,6 +139,11 @@ layer repeats work a cheaper layer already did.
   at ~1 min it is cheaper than a failed CI run, so it remains the default).
   Pushing to `dev` directly is no longer possible. Commit hooks stay.
 
+**Superseded 2026-10-26:** #362 changed the local pre-push hook to core plus
+import-affected tests (`scripts/test-affected --run`). `PYRITE_PUSH_FULL=1`
+requests the full suite. [CONTRIBUTING](../../CONTRIBUTING.md#running-the-tests)
+is the current statement of the stages.
+
 ### 3a. The value chain (amended 2026-09-18)
 
 Sharper rule for the table above, from running it for a day: **each step may
@@ -156,6 +161,12 @@ is waste; a step that could tell us something new and does not is a gap.
 | **push to `main`** | minutes | **depth in a browser**: Playwright e2e against a seeded world (deterministic since package A) |
 | **release** (tag) | minutes, once per release | **what a user gets**: install from the tag in a clean venv, the Docker image, the published artifacts |
 | pre-release, by hand or script | minutes | the release notes are true; the UI works in a browser; the runbook's clean-venv check |
+
+**Superseded 2026-10-26:** #400 added the merge queue; #1197 narrowed it to
+Python 3.13. The following push to `dev` tests 3.11 and 3.12, so a failure on
+those interpreters is first known after merge. Pull requests normally test
+3.12; infrastructure changes test all three. The current event-by-event table
+is in [CONTRIBUTING](../../CONTRIBUTING.md#running-the-tests).
 
 Consequences: the Python matrix runs one interpreter on pull requests and all
 three on pushes (`ci.yml`). The single required check on `dev` and `main` is
