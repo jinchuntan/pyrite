@@ -11,7 +11,6 @@ from pyrite.cli.output import cli_console, path_line
 from ..cli.context import cli_context
 from ..services.access_policy import UNSCOPED
 from ..utils.errors import exit_unless_whole
-from ..utils.frontmatter import Frontmatter, split_frontmatter
 
 logger = logging.getLogger(__name__)
 console = cli_console()
@@ -269,30 +268,12 @@ def export_site(
             for f in scaffolded:
                 console.print(path_line("  Created ", f, style="dim"))
 
-        # Walk the source files: an unloadable file may never have had an
-        # index row, so an index listing cannot account for every omission.
-        from ..storage.repository import KBRepository
+        from ..services.export_service import ExportService
 
-        repo = KBRepository(kb_config)
-        files = sorted(repo.list_all_files())
-        if not files:
+        entries, unreadable, source_count = ExportService(config, db).load_site_entries(kb)
+        if not source_count:
             console.print("[yellow]No entries found in KB.[/yellow]")
             raise typer.Exit(0)
-
-        entries = []
-        unreadable = []
-        for path in files:
-            try:
-                entry = (
-                    repo.load_entry_from_file(path)
-                    if path.name == "__collection.yaml"
-                    else _entry_from_file(path)
-                )
-                if entry is None:
-                    raise ValueError("No YAML frontmatter found")
-                entries.append(entry)
-            except Exception as exc:
-                unreadable.append((path.relative_to(kb_config.path), str(exc)))
 
         if unreadable:
             count = len(unreadable)
@@ -338,19 +319,9 @@ def export_site(
 
 
 def _entry_from_file(path):
-    """The Entry a markdown file holds, split by the loader's rule; None when
-    the file has no frontmatter."""
-    from ..models.core_types import entry_from_frontmatter
-    from ..utils.yaml import load_yaml
+    from ..services.export_service import entry_from_file
 
-    if not path.is_file():
-        raise ValueError("Not a regular file")
-    split = split_frontmatter(path.read_text(encoding="utf-8"))
-    if not isinstance(split, Frontmatter):
-        return None
-    entry = entry_from_frontmatter(load_yaml(split.text), split.body)
-    entry.file_path = path
-    return entry
+    return entry_from_file(path)
 
 
 def _load_entry_from_result(result: dict, svc, kb: str | None):

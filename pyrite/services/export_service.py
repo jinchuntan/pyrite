@@ -11,6 +11,7 @@ from pathlib import Path
 
 from ..config import PyriteConfig
 from ..exceptions import PyriteError
+from ..models.base import Entry
 from ..storage.database import PyriteDB
 from ..utils.sanitize import sanitize_filename, unique_path_component
 
@@ -38,12 +39,60 @@ def _yaml_quote(value: str) -> str:
     return value
 
 
+def entry_from_file(path: Path) -> Entry | None:
+    """The Entry a markdown file holds, split by the loader's rule; None when
+    the file has no frontmatter."""
+    from ..models.core_types import entry_from_frontmatter
+    from ..utils.frontmatter import Frontmatter, split_frontmatter
+    from ..utils.yaml import load_yaml
+
+    if not path.is_file():
+        raise ValueError("Not a regular file")
+    split = split_frontmatter(path.read_text(encoding="utf-8"))
+    if not isinstance(split, Frontmatter):
+        return None
+    entry = entry_from_frontmatter(load_yaml(split.text), split.body)
+    entry.file_path = path
+    return entry
+
+
 class ExportService:
     """Service for KB export and git operations."""
 
     def __init__(self, config: PyriteConfig, db: PyriteDB):
         self.config = config
         self.db = db
+
+    def load_site_entries(self, kb_name: str) -> tuple[list[Entry], list[tuple[Path, str]], int]:
+        """Read every source file, including files never successfully indexed.
+
+        Return entries, relative paths and reasons for omissions, and the source
+        count. The caller can distinguish an empty KB from a failed export.
+        """
+        from ..storage.repository import KBRepository
+
+        kb = self.config.require_kb(kb_name, db=self.db)
+        repo = KBRepository(kb)
+        paths = sorted(repo.list_all_files())
+        entries: list[Entry] = []
+        failures: list[tuple[Path, str]] = []
+        for path in paths:
+            try:
+                if not path.is_file():
+                    raise ValueError("Not a regular file")
+                entry = (
+                    repo.load_entry_from_file(path)
+                    if path.name == "__collection.yaml"
+                    else entry_from_file(path)
+                )
+                if entry is None:
+                    raise ValueError("No YAML frontmatter found")
+                entries.append(entry)
+            except Exception as exc:
+                # A batch export keeps good entries and returns every omitted
+                # path; the CLI uses these failures to choose a nonzero exit.
+                failures.append((path.relative_to(kb.path), str(exc)))
+        return entries, failures, len(paths)
 
     def export_kb_to_directory(self, kb_name: str, target_dir: Path) -> dict:
         """Export all entries in a KB as markdown files to a directory.
