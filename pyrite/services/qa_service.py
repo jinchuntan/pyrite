@@ -1401,6 +1401,24 @@ class QAService:
                 shown = file_path
             self._check_reserved_key_collisions(issues, kb_name, entry, shown)
             self._check_task_priority(issues, kb_name, entry, shown)
+            source = entry._source_frontmatter
+            if (
+                entry.entry_type == "task"
+                and isinstance(source, dict)
+                and "metadata" in source
+                and not isinstance(source["metadata"], dict)
+            ):
+                issues.append(
+                    {
+                        "entry_id": entry.id,
+                        "kb_name": kb_name,
+                        "rule": "metadata_shape",
+                        "severity": "warning",
+                        "field": "metadata",
+                        "path": str(shown),
+                        "message": f"{shown}: task metadata must be a mapping; the file's value is kept.",
+                    }
+                )
             self._check_double_spellings(issues, kb_name, entry, shown)
             if entry._source_frontmatter is not None:
                 leaked = leaked_frontmatter_line(entry._source_frontmatter, entry.body or "")

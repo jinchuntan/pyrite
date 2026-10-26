@@ -506,6 +506,9 @@ class TaskEntry(Assignable, Temporal, Statusable, Prioritizable, Parentable, Not
     _shadowed_nested: dict[str, Any] = field(
         default_factory=dict, init=False, repr=False, compare=False
     )
+    # A malformed metadata node is not a bag of fields. Keep it separately
+    # so readers can use the real top-level fields without losing that node.
+    _non_mapping_metadata: Any = field(default_factory=dict, init=False, repr=False, compare=False)
 
     #: Written by TaskService (claim, checkpoint, transitions), never by a
     #: caller's field update: the audit trail must say what really happened.
@@ -552,7 +555,9 @@ class TaskEntry(Assignable, Temporal, Statusable, Prioritizable, Parentable, Not
             if key not in meta:
                 meta[key] = value
         meta.pop("metadata", None)
-        if self._shadowed_nested:
+        if not isinstance(self._non_mapping_metadata, dict):
+            meta["metadata"] = self._non_mapping_metadata
+        elif self._shadowed_nested:
             # A key the source spelled twice: its nested value stays nested
             # beside the promoted top-level one (decision 4: lose nothing).
             meta["metadata"] = dict(self._shadowed_nested)
@@ -569,12 +574,13 @@ class TaskEntry(Assignable, Temporal, Statusable, Prioritizable, Parentable, Not
         # A), so on a collision the field's own name wins, as it does for a
         # declared field; the double spelling is reported by `index health`
         # and `qa validate`, and an update of that field is refused.
-        explicit_metadata = meta.get("metadata", {}) or {}
+        explicit_metadata = meta.get("metadata", {})
+        nested = explicit_metadata if isinstance(explicit_metadata, dict) else {}
         extra_metadata = {k: v for k, v in meta.items() if k not in _TASK_KNOWN_KEYS}
-        kwargs["metadata"] = {**explicit_metadata, **extra_metadata}
+        kwargs["metadata"] = {**nested, **extra_metadata}
         # The nested value of a key spelled twice is kept, so a save loses
         # nothing (#1001, decision 4); `to_frontmatter` writes it back nested.
-        shadowed = {k: v for k, v in explicit_metadata.items() if k in extra_metadata}
+        shadowed = {k: v for k, v in nested.items() if k in extra_metadata}
         entry = cls(
             **kwargs,
             status=meta.get("status", "open"),
@@ -590,4 +596,12 @@ class TaskEntry(Assignable, Temporal, Statusable, Prioritizable, Parentable, Not
             status_change_log=meta.get("status_change_log", []) or [],
         )
         entry._shadowed_nested = shadowed
+        if not isinstance(explicit_metadata, dict):
+            entry._non_mapping_metadata = explicit_metadata
         return entry
+
+    def validate(self) -> list[str]:
+        errors = super().validate()
+        if not isinstance(self._non_mapping_metadata, dict):
+            errors.append("Task metadata must be a mapping")
+        return errors
