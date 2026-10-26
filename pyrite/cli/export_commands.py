@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import typer
+from rich.text import Text
 
 from pyrite.cli.output import cli_console, path_line
 
@@ -268,22 +269,45 @@ def export_site(
             for f in scaffolded:
                 console.print(path_line("  Created ", f, style="dim"))
 
-        # Load all entries from DB
-        raw_entries = svc.list_entries(kb_name=kb, limit=100000)
-        if not raw_entries:
+        # Walk the source files: an unloadable file may never have had an
+        # index row, so an index listing cannot account for every omission.
+        from ..storage.repository import KBRepository
+
+        repo = KBRepository(kb_config)
+        files = sorted(repo.list_all_files())
+        if not files:
             console.print("[yellow]No entries found in KB.[/yellow]")
             raise typer.Exit(0)
 
-        # Load full Entry objects from disk
         entries = []
-        for row in raw_entries:
-            entry = _load_entry_from_result(row, svc, kb)
-            if entry:
+        unreadable = []
+        for path in files:
+            try:
+                entry = (
+                    repo.load_entry_from_file(path)
+                    if path.name == "__collection.yaml"
+                    else _entry_from_file(path)
+                )
+                if entry is None:
+                    raise ValueError("No YAML frontmatter found")
                 entries.append(entry)
+            except Exception as exc:
+                unreadable.append((path.relative_to(kb_config.path), str(exc)))
+
+        if unreadable:
+            count = len(unreadable)
+            noun = "entry" if count == 1 else "entries"
+            verb = "is" if count == 1 else "are"
+            console.print(
+                f"[yellow]{count} {noun} could not be loaded and {verb} not in the export.[/yellow]"
+            )
+            for path, reason in unreadable:
+                # Paths and loader text are literal, including Rich markup.
+                console.print(Text(f"  {path}: {reason}"))
 
         if not entries:
             console.print("[yellow]No entries could be loaded.[/yellow]")
-            raise typer.Exit(0)
+            exit_unless_whole(len(unreadable), 0)
 
         # Export to content/ subdirectory (or root if not --init)
         content_dir = (
@@ -310,6 +334,7 @@ def export_site(
             console.print(path_line("  cd ", output))
             console.print("  npm install")
             console.print("  npx quartz build --serve")
+        exit_unless_whole(len(unreadable), result["entries_exported"])
 
 
 def _entry_from_file(path):
