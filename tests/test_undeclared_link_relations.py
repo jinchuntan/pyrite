@@ -9,7 +9,18 @@ from tests._world import build_world
 
 
 @pytest.mark.parametrize("surface", ["cli", "bidi", "create", "bulk", "mcp"])
-@pytest.mark.parametrize("relation", ["typo_relation", "related_to", "related"])
+@pytest.mark.parametrize(
+    "relation",
+    [
+        "typo_relation",
+        pytest.param(
+            "related_to", marks=pytest.mark.control(reason="declared relations already work")
+        ),
+        pytest.param(
+            "related", marks=pytest.mark.control(reason="legacy relation aliases already work")
+        ),
+    ],
+)
 def test_link_writers_report_undeclared_relations(tmp_path, surface, relation):
     world = build_world(tmp_path, kbs=[KBConfig(name="demo", path=tmp_path / "kb")], rest=False)
     try:
