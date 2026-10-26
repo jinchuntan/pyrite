@@ -875,7 +875,7 @@ def register_entry_commands(app: typer.Typer) -> None:
         def rich(console: Console, data: dict) -> None:
             for link in data["links"]:
                 _report_link(console, link)
-            _print_warnings(console, data.get("warnings", []))
+            _print_warnings(cli_console(stderr=True), data.get("warnings", []))
             for problem in data.get("failed", []):
                 console.print(escape(problem["error"]), soft_wrap=True, style="red")
 

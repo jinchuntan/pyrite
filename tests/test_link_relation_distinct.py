@@ -391,6 +391,7 @@ def test_cli_link_bidirectional_unknown_relation_never_writes_the_reversed_claim
     notice = plain(result.stderr)
     assert "No inverse is known for 'informs'" in notice, notice
     assert "related_to" in notice, notice
+    assert "UNDECLARED_RELATION" in notice, notice
     stdout = plain(result.stdout)
     assert "No inverse is known" not in stdout, stdout
     assert [ln for ln in stdout.splitlines() if ln.strip()] == [

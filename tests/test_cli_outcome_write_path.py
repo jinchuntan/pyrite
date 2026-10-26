@@ -546,13 +546,13 @@ def test_add_rename_and_link_succeed_as_one_json_document_by_default(env):
     valid = run(env, "add", str(md), "-k", "typed", "--validate-only", "--allow-undeclared")
     assert doc(valid)["valid"] is True and doc(valid)["outcome"] == "done"
 
-    linked = run(env, "link", "hello", "world", "-k", "notes", "-r", "informs")
+    linked = run(env, "link", "hello", "world", "-k", "notes", "-r", "supports")
     assert doc(linked) == {
         "links": [
             {
                 "created": True,
                 "source": "hello",
-                "relation": "informs",
+                "relation": "supports",
                 "target": "world",
                 "target_kb": "notes",
             }
