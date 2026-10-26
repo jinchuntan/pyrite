@@ -70,7 +70,7 @@ def kb_list(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """List all configured knowledge bases."""
@@ -185,7 +185,7 @@ def kb_discover(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Auto-discover knowledge bases by finding kb.yaml files."""
@@ -264,7 +264,7 @@ def kb_validate(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Validate knowledge base configuration and contents.
@@ -484,7 +484,7 @@ def kb_reindex(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Reindex a specific knowledge base."""
@@ -538,7 +538,7 @@ def kb_health(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Check health of a knowledge base."""
@@ -677,7 +677,7 @@ def schema_show(
         "--format",
         "-f",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Show the current schema for a KB."""
@@ -738,7 +738,7 @@ def schema_add_type(
         "--format",
         "-f",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Add a type definition to a KB's schema."""
@@ -784,7 +784,7 @@ def schema_remove_type(
         "--format",
         "-f",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Remove a type definition from a KB's schema."""
@@ -820,7 +820,7 @@ def schema_set(
         "--format",
         "-f",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Replace schema from a YAML file."""

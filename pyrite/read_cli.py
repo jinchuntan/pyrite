@@ -107,7 +107,7 @@ def get_entry(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: rich, json, markdown, csv, yaml",
+        help="Output format: rich, json, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Get a specific entry by ID."""
@@ -171,7 +171,7 @@ def list_kbs(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: rich, json, markdown, csv, yaml",
+        help="Output format: rich, json, markdown, csv, csv-safe, yaml",
     ),
 ):
     """List all knowledge bases."""
@@ -229,7 +229,7 @@ def timeline(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: rich, json, markdown, csv, yaml",
+        help="Output format: rich, json, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Query timeline events."""
@@ -287,7 +287,7 @@ def tags_cmd(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: rich, json, markdown, csv, yaml",
+        help="Output format: rich, json, markdown, csv, csv-safe, yaml",
     ),
 ):
     """List tags with counts."""
@@ -336,7 +336,7 @@ def backlinks_cmd(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: rich, json, markdown, csv, yaml",
+        help="Output format: rich, json, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Find entries that link to a given entry."""

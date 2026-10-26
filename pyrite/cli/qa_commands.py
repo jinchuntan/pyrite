@@ -29,7 +29,7 @@ def qa_validate(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
     severity: str | None = typer.Option(
         None, "--severity", "-s", help="Minimum severity filter: error, warning, info"
@@ -143,7 +143,7 @@ def qa_assess(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Run QA assessment on entries, creating assessment records.
@@ -216,7 +216,7 @@ def qa_assess(
         formatted = _format_output(data, output_format)
         if formatted is not None:
             typer.echo(formatted)
-            if output_format in ("csv", "markdown"):
+            if output_format in ("csv", "csv-safe", "markdown"):
                 # These formats render `results` only; what was not assessed,
                 # and tasks not created, still reach the reader (#795).
                 for f in data.get("failed", []):
@@ -277,7 +277,7 @@ def qa_status(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Show QA status dashboard with issue counts and coverage."""
@@ -729,7 +729,7 @@ def qa_stale(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Find entries that haven't been updated recently.
@@ -782,7 +782,7 @@ def qa_compact(
         "rich",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Find entries that are candidates for archival.

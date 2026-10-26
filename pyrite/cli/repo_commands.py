@@ -161,7 +161,7 @@ def repo_status(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Show detailed status for a repository."""
@@ -216,7 +216,7 @@ def repo_list_extended(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """List all repositories with sync status."""

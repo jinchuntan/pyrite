@@ -18,7 +18,7 @@ def list_collections(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """List all collections with entry counts."""
@@ -75,7 +75,7 @@ def query_entries(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Run an ad-hoc collection query."""

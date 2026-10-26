@@ -1679,3 +1679,21 @@ fixes were attempted and failed. `manual` keeps only the issues a person must
 decide. One failed entry does not
 stop the rest. With `--dry-run`, `fixed` lists what would be attempted and
 `failed` is empty.
+
+
+### CSV for spreadsheet viewing
+
+`csv` is raw data for scripts and retains its existing bytes. For spreadsheet
+viewing, select `--format csv-safe` on a CSV-capable CLI command, or
+`format=csv-safe` on `/api/entries/export`. Other REST CSV responses accept
+`Accept: text/csv` with `csv_safe=true` (or `1`); without it they remain raw.
+
+The opt-in quotes every CSV field, doubles embedded quotes, and adds a leading
+apostrophe to cells beginning with `=`, `+`, `-`, `@`, tab, CR, LF, or the
+full-width formula-prefix variants. This includes header cells and signed
+numbers such as `-2`: they are deliberately treated as text. The apostrophe
+is part of the exported value, so scripts should continue to request `csv`.
+
+This is an initial-import text-escaping option, not a guarantee across every
+spreadsheet application or a save/reopen round trip. Excel may strip escapes
+when saving; see [OWASP's CSV injection guidance](https://community.owasp.org/attacks/CSV_Injection).

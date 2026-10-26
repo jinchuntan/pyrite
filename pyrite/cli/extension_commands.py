@@ -53,7 +53,7 @@ def extension_init(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Scaffold a new Pyrite extension with plugin boilerplate."""
@@ -357,7 +357,7 @@ def extension_install(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Install a Pyrite extension from a local path."""
@@ -440,7 +440,7 @@ def extension_list(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """List installed Pyrite extensions."""
@@ -517,7 +517,7 @@ def extension_uninstall(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Uninstall a Pyrite extension."""

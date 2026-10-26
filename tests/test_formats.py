@@ -10,11 +10,11 @@ import pytest
 
 
 class TestFormatRegistry:
-    def test_registry_has_four_defaults(self):
+    def test_registry_has_default_formats_and_opt_in_safe_csv(self):
         from pyrite.formats import get_format_registry
 
         registry = get_format_registry()
-        assert set(registry.available_formats()) == {"json", "markdown", "csv", "yaml"}
+        assert set(registry.available_formats()) == {"json", "markdown", "csv", "csv-safe", "yaml"}
 
     def test_get_by_media_type_json(self):
         from pyrite.formats import get_format_registry

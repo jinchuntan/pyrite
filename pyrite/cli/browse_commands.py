@@ -54,7 +54,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """Browse entries with filters and pagination."""
@@ -125,7 +125,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """Fetch multiple entries in one call."""
@@ -216,7 +216,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """One-shot KB orientation summary — types, tags, recent changes, and schema.
@@ -377,7 +377,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """Show recently changed entries."""
@@ -456,7 +456,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """Query timeline events."""
@@ -504,7 +504,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """List tags with counts."""
@@ -542,7 +542,7 @@ def register_browse_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """Find entries that link to a given entry."""

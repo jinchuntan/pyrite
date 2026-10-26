@@ -1,0 +1,1 @@
+CSV emitters offer the opt-in `csv-safe` format. It quotes every cell and prefixes formula-leading values as text, while `csv` keeps its existing output. Negotiated REST CSV accepts `csv_safe=true`; entry exports accept `format=csv-safe`.

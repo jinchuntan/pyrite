@@ -241,7 +241,7 @@ def register_entry_commands(app: typer.Typer) -> None:
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """Get a specific entry by ID."""

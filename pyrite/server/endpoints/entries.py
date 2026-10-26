@@ -541,7 +541,7 @@ def resolve_entry(
 def export_entries(
     request: Request,
     kb: str = Query(..., description="KB to export"),
-    format: str = Query("json", description="Export format: json, markdown, csv"),
+    format: str = Query("json", description="Export format: json, markdown, csv, csv-safe"),
     entry_type: str | None = Query(None, description="Filter by entry type"),
     tag: str | None = Query(None, description="Filter by tag"),
     limit: int = Query(10000, ge=1, le=50000),

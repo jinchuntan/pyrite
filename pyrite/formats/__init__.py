@@ -49,7 +49,7 @@ def get_format_registry() -> FormatRegistry:
 
 
 def _register_defaults(registry: FormatRegistry):
-    from .csv_fmt import csv_serialize
+    from .csv_fmt import csv_safe_serialize, csv_serialize
     from .json_fmt import json_serialize
     from .markdown_fmt import markdown_serialize
     from .yaml_fmt import yaml_serialize
@@ -57,6 +57,7 @@ def _register_defaults(registry: FormatRegistry):
     registry.register(FormatSpec("json", "application/json", "json", json_serialize))
     registry.register(FormatSpec("markdown", "text/markdown", "md", markdown_serialize))
     registry.register(FormatSpec("csv", "text/csv", "csv", csv_serialize))
+    registry.register(FormatSpec("csv-safe", "text/csv", "csv", csv_safe_serialize))
     registry.register(FormatSpec("yaml", "text/yaml", "yaml", yaml_serialize))
 
 

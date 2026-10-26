@@ -56,6 +56,26 @@ def csv_serialize(data: Any, **kwargs) -> str:
     return str(data)
 
 
+def csv_safe_serialize(data: Any, **kwargs) -> str:
+    """Opt-in text escaping of every CSV cell, including user-chosen headers.
+
+    Work on the raw serializer's cells so every table shape shares one rule
+    and the default CSV output stays byte-for-byte unchanged.
+    """
+    raw = csv_serialize(data, **kwargs)
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+
+    def as_text(cell: str) -> str:
+        if cell.startswith(("=", "+", "-", "@", "\t", "\r", "\n", "＝", "＋", "－", "＠")):
+            return "'" + cell
+        return cell
+
+    for row in csv.reader(io.StringIO(raw)):
+        writer.writerow([as_text(cell) for cell in row])
+    return output.getvalue()
+
+
 def _results_to_csv(results: list) -> str:
     if not results:
         return ""

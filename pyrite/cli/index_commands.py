@@ -307,7 +307,7 @@ def index_stats(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
 ):
     """Show index statistics."""
@@ -481,7 +481,7 @@ def index_health(
         "json",
         "--format",
         callback=validate_output_format,
-        help="Output format: json, rich, markdown, csv, yaml",
+        help="Output format: json, rich, markdown, csv, csv-safe, yaml",
     ),
     kb_name: str = typer.Option(
         None, "--kb", "-k", help="Only check this KB (default: every configured KB)"

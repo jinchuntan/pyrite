@@ -120,7 +120,7 @@ def register_search_command(app: typer.Typer):
             "json",
             "--format",
             callback=validate_output_format,
-            help="Output format: json, rich, markdown, csv, yaml",
+            help="Output format: json, rich, markdown, csv, csv-safe, yaml",
         ),
     ):
         """
@@ -312,7 +312,7 @@ def register_search_command(app: typer.Typer):
 
                 resp_data = {"query": query, "count": len(results), "results": results, **response}
                 table_fields = fields_list
-                if table_fields is None and output_format == "csv" and row_fields:
+                if table_fields is None and output_format in ("csv", "csv-safe") and row_fields:
                     # The columns the lean row has: a score column no row of this
                     # mode carries would be an empty column that looks like data.
                     table_fields = [
