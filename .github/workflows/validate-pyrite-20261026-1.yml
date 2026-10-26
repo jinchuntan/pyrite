@@ -1,0 +1,79 @@
+name: Validate Pyrite contributions 2026-10-26 batch 1
+
+on:
+  push:
+    branches: [process/validate-pyrite-20261026-1]
+
+permissions:
+  contents: read
+
+jobs:
+  affected-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - issue: 1318
+            sha: 89c3c7d70366d779db745435ce5653b6ffd3e2dc
+          - issue: 1254
+            sha: 62c9bf0c5c77235f3b4c822f266d66137d7b17d2
+          - issue: 1325
+            sha: 3e0cbe806c909b0cd4f3758345233ef66abf8c82
+          - issue: 1332
+            sha: af09c2032b63643dd1b4900a9441f8c483dfa258
+          - issue: 672
+            sha: dda817387c78683d7bbcba1f2938149c47c96fcf
+          - issue: 1300
+            sha: e87ba271f32fc166d31fecb58283d773df00edfb
+          - issue: 1274
+            sha: a6db77a55a150fc165db52cda53d113b6e99b341
+          - issue: 1171
+            sha: afe866fa1e3aef5170ac2c9c64f2541c03b1ae7d
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install project and extensions
+        run: |
+          uv venv .venv
+          uv pip install --torch-backend cpu --python .venv/bin/python -e ".[all]"
+          for ext in extensions/*/; do
+            uv pip install --python .venv/bin/python -e "$ext"
+          done
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: pyrite-minilm-v1
+      - name: Cache semantic-search model
+        run: |
+          .venv/bin/python - <<'PY'
+          from sentence_transformers import SentenceTransformer
+          SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", trust_remote_code=False)
+          PY
+      - name: Lint and format
+        run: |
+          .venv/bin/ruff check pyrite/ tests/ extensions/
+          .venv/bin/ruff format --check pyrite/ tests/ extensions/
+      - name: Affected core and experimental tests
+        env:
+          HF_HUB_OFFLINE: "1"
+        run: |
+          set -euo pipefail
+          scripts/test-affected --run --experimental --base b1a1820c924fca269723659cb65dea4a655b5d6c -n 4 2>&1 | tee affected-tests.log
+      - name: Save report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-${{ matrix.issue }}-report
+          path: affected-tests.log
