@@ -1401,6 +1401,20 @@ class QAService:
                 shown = file_path
             self._check_reserved_key_collisions(issues, kb_name, entry, shown)
             self._check_task_priority(issues, kb_name, entry, shown)
+            from ..schema.provenance import relation_warning
+
+            for link in entry.links:
+                warning = relation_warning(link.relation)
+                if warning is not None:
+                    issues.append(
+                        {
+                            **warning,
+                            "entry_id": entry.id,
+                            "kb_name": kb_name,
+                            "rule": "undeclared_relation",
+                            "path": str(shown),
+                        }
+                    )
             self._check_double_spellings(issues, kb_name, entry, shown)
             if entry._source_frontmatter is not None:
                 leaked = leaked_frontmatter_line(entry._source_frontmatter, entry.body or "")

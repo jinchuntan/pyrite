@@ -199,6 +199,8 @@ def links_bulk_create(
             item["error"] = r.get("error", "failed")
             if r.get("error_code"):
                 item["error_code"] = r["error_code"]
+        if r.get("warnings"):
+            item["warnings"] = r["warnings"]
         items.append(item)
 
     def rich(console: Console, data: dict) -> None:
@@ -218,6 +220,8 @@ def links_bulk_create(
         for item in data["results"]:
             if item["status"] == "failed":
                 console.print(f"  [red]Link {item['index']}: {item['error']}[/red]")
+            for warning in item.get("warnings", []):
+                console.print(f"  Warning: {warning['message']}", markup=False)
 
     # The batch rule: none failed is done, some of each partial, none done nothing.
     return Outcome.from_counts(

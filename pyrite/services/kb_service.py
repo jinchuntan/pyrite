@@ -48,6 +48,7 @@ from ..models.factory import build_entry
 from ..plugins.context import PluginContext
 from ..schema import Link, Source
 from ..schema.enum_check import is_off_list, is_per_element
+from ..schema.provenance import relation_warning
 from ..schema.reserved import RESERVED_FIELD_NAMES
 from ..storage.database import PyriteDB
 from ..storage.document_manager import DocumentManager
@@ -648,6 +649,10 @@ class KBService:
                 model_errors.append(message)
         if model_errors:
             raise ValidationError("; ".join(model_errors))
+        for link in entry.links:
+            warning = relation_warning(link.relation)
+            if warning is not None and warning not in model_warnings:
+                model_warnings.append(warning)
 
         fields = self._validated_fields(entry)
         result = self._schema_result(entry, fields, kb_name, kb_config, existing_entry)
@@ -2779,6 +2784,11 @@ class KBService:
                     "resolved": _target_exists(),
                     "created": False,
                     "relation": existing.relation,
+                    **(
+                        {"warnings": [warning]}
+                        if (warning := relation_warning(existing.relation))
+                        else {}
+                    ),
                 }
 
         resolved = _target_exists()
@@ -2791,8 +2801,13 @@ class KBService:
         # the momentary lock. The item is spelled as it always was (`kb:` is
         # the target KB, the source's own included).
         item = Link(target=target_id, relation=relation, note=note, kb=tkb).to_dict()
-        self.apply_operations(source_id, source_kb, [Append("links", item)])
-        return {"resolved": resolved, "created": True, "relation": relation}
+        written = self.apply_operations(source_id, source_kb, [Append("links", item)])
+        return {
+            "resolved": resolved,
+            "created": True,
+            "relation": relation,
+            **({"warnings": written.warnings} if written.warnings else {}),
+        }
 
     def _same_link_kb(self, written: Any, source_kb: str, target_kb: str) -> bool:
         """The duplicate key's KB comparison: the KB the file's ``kb:``
@@ -2851,6 +2866,8 @@ class KBService:
             if entry is None:
                 results[i] = {"status": "failed", "error": f"source entry not found: {source_id}"}
                 continue
+            warning = relation_warning(relation)
+            notices = {"warnings": [warning]} if warning else {}
             # Duplicate key matches add_link's: (target, kb, relation) (#396),
             # normalised the same way so legacy data (no `relation:` key,
             # loaded as "related") matches this method's "related_to" default.
@@ -2860,14 +2877,14 @@ class KBService:
                 and _norm_relation(existing.relation) == _norm_relation(relation)
                 for existing in entry.links
             ):
-                results[i] = {"status": "skipped"}
+                results[i] = {"status": "skipped", **notices}
                 continue
             # The model's list is what the duplicate check above reads, so a
             # second spec for the same link in this batch is skipped too.
             link = Link(target=target_id, relation=relation, note=note, kb=tkb)
             entry.links.append(link)
             new_items.setdefault(source_id, []).append(link.to_dict())
-            results[i] = {"status": "created"}
+            results[i] = {"status": "created", **notices}
             dirty.setdefault(source_id, []).append(i)
 
         if dry_run:

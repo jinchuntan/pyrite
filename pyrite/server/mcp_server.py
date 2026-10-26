@@ -1724,6 +1724,7 @@ class PyriteMCPServer:
             "relation": result["relation"],
             "resolved": result["resolved"],
             "created": result["created"],
+            **({"warnings": result["warnings"]} if result.get("warnings") else {}),
         }
 
     # =========================================================================

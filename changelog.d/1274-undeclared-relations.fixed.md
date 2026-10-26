@@ -1,0 +1,1 @@
+Link writes preserve undeclared relations and report an `UNDECLARED_RELATION` warning with the installed vocabulary. CLI, MCP and bulk-link responses carry the warning; QA also reports undeclared relations in existing files.

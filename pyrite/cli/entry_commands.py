@@ -420,9 +420,11 @@ def register_entry_commands(app: typer.Typer) -> None:
             # Add links after creation
             linked: list[dict] = []
             failed_links: list[dict] = []
+            link_warnings: list[dict] = []
             for target, relation in link_specs:
                 try:
-                    svc.add_link(entry.id, kb_name, target, relation)
+                    link_result = svc.add_link(entry.id, kb_name, target, relation)
+                    link_warnings.extend(link_result.get("warnings", []))
                     linked.append({"target": target, "relation": relation})
                 except (PyriteError, ValueError) as e:
                     # The entry is kept (maintainer, 2026-10-02), so a retry of the
@@ -441,8 +443,8 @@ def register_entry_commands(app: typer.Typer) -> None:
             "entry_id": entry.id,
             "entry_type": entry.entry_type,
         }
-        if written.warnings:
-            data["warnings"] = written.warnings
+        if written.warnings or link_warnings:
+            data["warnings"] = [*written.warnings, *link_warnings]
         if link:
             data["linked"] = linked
             data["failed_links"] = failed_links
@@ -801,6 +803,7 @@ def register_entry_commands(app: typer.Typer) -> None:
 
         links: list[dict] = []
         failed: list[dict] = []
+        warnings: list[dict] = []
 
         with cli_context(
             kbs=(
@@ -809,6 +812,7 @@ def register_entry_commands(app: typer.Typer) -> None:
             )
         ) as (config, db, svc):
             result = svc.add_link(source, kb_name, target, relation, target_kb=target_kb, note=note)
+            warnings.extend(result.get("warnings", []))
             tkb = target_kb or kb_name
             # `result["relation"]` is what is actually on disk, not the
             # caller's own `relation` argument -- on a no-op (already
@@ -871,10 +875,13 @@ def register_entry_commands(app: typer.Typer) -> None:
         def rich(console: Console, data: dict) -> None:
             for link in data["links"]:
                 _report_link(console, link)
+            _print_warnings(console, data.get("warnings", []))
             for problem in data.get("failed", []):
                 console.print(escape(problem["error"]), soft_wrap=True, style="red")
 
         data: dict[str, Any] = {"links": links}
+        if warnings:
+            data["warnings"] = warnings
         if failed:
             data["failed"] = failed
         return (Outcome.partial if failed else Outcome.done)(data, rich=rich)

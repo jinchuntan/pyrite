@@ -295,6 +295,21 @@ def known_inverse_relation(relation: str) -> str | None:
     return declared["inverse"] if declared else None
 
 
+def relation_warning(relation: str) -> dict[str, Any] | None:
+    """Report a relation outside the core and installed-plugin vocabulary."""
+    declared = get_all_relationship_types()
+    if isinstance(relation, str) and RELATIONSHIP_ALIASES.get(relation, relation) in declared:
+        return None
+    return {
+        "code": "UNDECLARED_RELATION",
+        "relation": relation,
+        "declared": sorted(declared),
+        "field": "links",
+        "severity": "warning",
+        "message": f"Relation {relation!r} is undeclared; it was kept as requested.",
+    }
+
+
 def get_inverse_relation(relation: str) -> str:
     """Get the inverse of a relationship type.
 
