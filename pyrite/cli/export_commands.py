@@ -343,6 +343,8 @@ def _entry_from_file(path):
     from ..models.core_types import entry_from_frontmatter
     from ..utils.yaml import load_yaml
 
+    if not path.is_file():
+        raise ValueError("Not a regular file")
     split = split_frontmatter(path.read_text(encoding="utf-8"))
     if not isinstance(split, Frontmatter):
         return None

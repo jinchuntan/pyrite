@@ -195,6 +195,7 @@ EXPERIMENTAL: tuple[Surface, ...] = (
         "2",
         (
             "tests/test_export_service.py",
+            "tests/test_site_export_load_failures.py",
             "tests/test_export_to_repo.py",
             "tests/test_collection_export.py",
             "tests/test_quartz_renderer.py",
