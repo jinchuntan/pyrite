@@ -1,0 +1,1 @@
+Index schema repair now refuses non-constant defaults and stored generated columns on populated tables before changing the schema, with backup and rebuild guidance. Empty tables and constant defaults remain repairable in place.

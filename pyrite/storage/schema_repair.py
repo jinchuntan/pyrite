@@ -203,6 +203,23 @@ def repair_schema(
             # column, and needs a default for NOT NULL (sqlite.org/lang_altertable.html).
             addable = not column.primary_key and not column.unique
             addable = addable and (column.nullable or column.server_default is not None)
+            default = _DIALECT.ddl_compiler(_DIALECT, None).get_column_default_string(column)
+            requires_empty = (
+                column.computed is not None and column.computed.persisted is True
+            ) or (
+                default is not None
+                and (
+                    default.strip().upper() in {"CURRENT_TIMESTAMP", "CURRENT_DATE", "CURRENT_TIME"}
+                    or default.lstrip().startswith("(")
+                )
+            )
+            if requires_empty:
+                # SQLite permits these definitions only while the table is empty.
+                # Refuse the whole plan before adding any other missing column.
+                addable = (
+                    addable
+                    and conn.execute(f'SELECT 1 FROM "{table.name}" LIMIT 1').fetchone() is None
+                )
             if not addable:
                 cannot_add.append(f"{table.name}.{column.name}")
                 continue
