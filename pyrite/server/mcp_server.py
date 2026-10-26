@@ -12,7 +12,7 @@ Tiers:
 
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pydantic import AnyUrl
 
@@ -572,7 +572,7 @@ class PyriteMCPServer:
         bound = current_target()
         if bound is None:
             return self._svc
-        return bound.service("kb", KBService)
+        return cast(KBService, bound.service("kb", KBService))
 
     @svc.setter
     def svc(self, value: KBService) -> None:
